@@ -5,7 +5,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
-import { Sun, Moon, Monitor, BookOpen } from 'lucide-react';
+import TranslatorPage from './pages/TranslatorPage';
+import { Sun, Moon, Monitor, BookOpen, Languages } from 'lucide-react';
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
@@ -21,6 +22,9 @@ const Header = () => {
 
         <nav className="flex items-center gap-6 text-sm font-medium">
           <Link to="/" className="hover:text-brand-600 dark:hover:text-brand-500 transition-colors">Home</Link>
+          <Link to="/translator" className="flex items-center gap-1.5 hover:text-brand-600 dark:hover:text-brand-500 transition-colors">
+            <Languages className="w-4 h-4" /> AI Translator
+          </Link>
           <Link to="/login" className="hover:text-brand-600 dark:hover:text-brand-500 transition-colors">Login</Link>
           <Link to="/signup" className="hover:text-brand-600 dark:hover:text-brand-500 transition-colors">Sign Up</Link>
           <Link to="/dashboard" className="px-3 py-1.5 rounded-lg bg-brand-600 text-white hover:bg-brand-700 transition-colors">Dashboard</Link>
@@ -49,6 +53,7 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/translator" element={<TranslatorPage />} />
             </Routes>
           </main>
         </div>
