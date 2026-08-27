@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SUPPORTED_LANGUAGES, getLanguageByCode } from '../data/languages';
 import { translateEducationalContent } from '../services/translationService';
 import { 
@@ -6,10 +6,11 @@ import {
   Sparkles, 
   Copy, 
   Check, 
-  ArrowRightLeft, 
   Loader2, 
   BookOpenText, 
-  AlertCircle 
+  AlertCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 
 export default function TranslatorPage() {
@@ -19,10 +20,40 @@ export default function TranslatorPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Map app language codes to browser BCP-47 speech tags
+  const speechLangMap = {
+    hi: 'hi-IN',
+    mr: 'mr-IN',
+    bn: 'bn-IN',
+    ta: 'ta-IN',
+    te: 'te-IN',
+    kn: 'kn-IN',
+    ml: 'ml-IN',
+    gu: 'gu-IN',
+    pa: 'pa-IN',
+    or: 'or-IN',
+    as: 'as-IN',
+    ur: 'ur-IN'
+  };
+
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   const handleTranslate = async (e) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    }
 
     setIsLoading(true);
     setError(null);
@@ -49,6 +80,29 @@ export default function TranslatorPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleTextToSpeech = () => {
+    if (!('speechSynthesis' in window)) {
+      alert('Speech synthesis is not supported in this browser.');
+      return;
+    }
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(translatedText);
+    utterance.lang = speechLangMap[targetLang] || 'hi-IN';
+    utterance.rate = 0.9; // Slightly slower speed for clearer educational delivery
+
+    utterance.onend = () => setIsPlaying(false);
+    utterance.onerror = () => setIsPlaying(false);
+
+    setIsPlaying(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
       {/* Header */}
@@ -57,10 +111,10 @@ export default function TranslatorPage() {
           <Sparkles className="w-3.5 h-3.5" /> Context-Aware Dialect Translation
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-          AI Educational Translator
+          AI Educational Translator & Voice Assistant
         </h1>
         <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Translate textbooks, lecture notes, or technical concepts into regional languages while maintaining academic accuracy.
+          Translate textbooks or concepts into regional languages and listen to clear native audio pronunciations.
         </p>
       </div>
 
@@ -80,7 +134,7 @@ export default function TranslatorPage() {
               rows={8}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="Paste English notes, questions, or educational concepts here... (e.g., Photosynthesis is the process by which green plants make food...)"
+              placeholder="Paste English notes, questions, or educational concepts here..."
               className="w-full bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-brand-500 outline-none resize-none"
             />
           </div>
@@ -112,7 +166,11 @@ export default function TranslatorPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Target:</span>
                 <select
                   value={targetLang}
-                  onChange={(e) => setTargetLang(e.target.value)}
+                  onChange={(e) => {
+                    setTargetLang(e.target.value);
+                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                    setIsPlaying(false);
+                  }}
                   className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold outline-none cursor-pointer"
                 >
                   {SUPPORTED_LANGUAGES.map((lang) => (
@@ -124,13 +182,27 @@ export default function TranslatorPage() {
               </div>
 
               {translatedText && (
-                <button
-                  onClick={handleCopy}
-                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
-                  title="Copy Translation"
-                >
-                  {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleTextToSpeech}
+                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 text-xs font-medium ${
+                      isPlaying 
+                        ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' 
+                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+                    }`}
+                    title={isPlaying ? "Stop Audio" : "Listen to Translation"}
+                  >
+                    {isPlaying ? <VolumeX className="w-4 h-4 text-amber-600 animate-pulse" /> : <Volume2 className="w-4 h-4" />}
+                  </button>
+
+                  <button
+                    onClick={handleCopy}
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-400 transition-colors"
+                    title="Copy Translation"
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
               )}
             </div>
 
