@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SUPPORTED_LANGUAGES, getLanguageByCode } from '../data/languages';
+import QuizGenerator from '../components/QuizGenerator';
 import { 
   BookOpen, 
   Trophy, 
@@ -139,6 +140,9 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      {/* AI Regional Quiz Generator Section */}
+      <QuizGenerator defaultTopic="Cellular Biology Concepts" defaultLang={activeLang} />
 
     </div>
   );
